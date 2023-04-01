@@ -1,0 +1,15 @@
+{
+  "name": "docto-as-code",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1", 
+    "build": "npx  -p @mermaid-js/mermaid-cli mmdc --configFile config.json -i ./src/contexto-sistema.md -o ./build/contexto-sistema.md  & pandoc --toc -M document-css=false -s ./build/contexto-sistema.md -o ./build/contexto-sistema.html"
+  },
+  "d": "&& wkhtmltopdf ./build/contexto-sistema.html ./build/contexto-sistema.pdf",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
+

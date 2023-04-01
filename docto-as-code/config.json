@@ -1,0 +1,17 @@
+{
+  "c4": {
+    "curve": "curve",
+    "padding": 0,
+    "background-color": "#F00",
+    "diagramMarginX": 5,
+    "diagramMarginY": 5,
+    "messageFontSize": 10,
+    "messageFontWeight": "bold",
+    "fontSize": 8,
+    "c4ShapeInRow": "8",
+    "c4BoundaryInRow": "1",
+    "useWidth": true,
+    "useMaxWidth": true,
+    "person_bg_color": "red"
+  }
+}
