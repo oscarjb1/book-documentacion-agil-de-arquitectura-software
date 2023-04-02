@@ -7,6 +7,9 @@ lang: es-MX
 logo: ../images/oscarblancarteblog.png
 ---
 
+
+
+
 <img src="../images/oscarblancarteblog.png">
 
 
@@ -78,9 +81,32 @@ Los siguientes requerimientos no funcionales fueron identificados y tomados en c
 
 ## Arquitectura de contexto del sistema
 
-https://github.com/mermaid-js/mermaid/blob/master/packages/mermaid/src/defaultConfig.ts#L33
+```plantuml
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
-![Diagrama de contexto del sistema](./contexto-sistema-1.svg)
+title ACME Store
+
+Person(customer, "Customer", "Cliente del ecommerce")
+System_Ext(fedexSys, "Software System", "Proveedor de paquetería")
+
+Enterprise_Boundary(b1, "ACME Store") { 
+    System(ACMEStoreSys, "ACME Store", "Aplicación web de ventas de productos online")
+    System_Ext(erpSys, "ERP", "ERP desde el cúal se gestiona el <br>catálogo de productos e inventarios")
+    System_Ext(paymentServiceSys, "PaymentService", "Service de procesamiento de pagos")
+    System_Ext(emailSenderSys, "EmailSender", "Servicio de envío de emails")
+    System_Ext(KeycloakSys, "Keycloak", "Servicio de autenticación y autorización")
+}
+
+Rel(customer, ACMEStoreSys, "Cliente del ecommerce")
+Rel(ACMEStoreSys, erpSys, "Administración de productos e inventarios")
+Rel(ACMEStoreSys, paymentServiceSys, "Procesamiento de pagos")
+Rel(ACMEStoreSys, KeycloakSys, "Autenticación y autorización")
+Rel(ACMEStoreSys, emailSenderSys, "Envío de emails y listas de correo")
+Rel(ACMEStoreSys, fedexSys, "Cotizar, programar<br>y consultar status de envios")
+@enduml
+```
+
 
 ACME Store es la aplicación web de comercio electrónico de ACME Corp, la cual puedes visitar en acmestore.com, o descargando la aplicación desde la App Store. 
 ACME Store puede parecer una simple aplicación, sin embargo, es en realidad una serie de componentes que le dan vida al sistema, que van desde la aplicación web, la app para móviles, el API REST de backend y procesos de sincronización de productos y existencias. Además de estos, se hacen uso de otros sistemas, tanto externos como internos, los cuales son:
@@ -99,9 +125,42 @@ Más adelante en este mismo documento vamos a profundizar en los componentes que
 ## Arquitectura de contenedores
 ACME Store es una aplicación de comercio electrónico, compuesto por diferentes componentes que juegan un papel importante dentro de la arquitectura.  Si bien ACME Store tiene la parte visible para el usuario que es la versión web y móvil de la aplicación, existen otros componentes de backend que tiene una importante relevancia para poder procesar los pedidos, realizar los pagos, envío de email, sincronización de productos e inventarios, etc. En este sentido ACME Store API es el componente de backend que expone los servicios y la lógica de negocio que le da vida a la aplicación y en el que nos centraremos en este documento.
 
+```plantuml
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+  title Diagrama de contenedores del sistema ACME Store
+  Person(customer, "Customer", "Cliente del ecommerce")
+  System_Ext(paymentServiceSys, "PaymentService", "Servicio para el procesamiento de pagos")
+  System_Ext(erpSys, "ERP", "Gestión de productos e inventarios")
+   System_Ext(emailServiceSys, "EmailService", "Servicio de envío de emails<br>y listas de correo")
 
-![Diagrama de contenedores de ACME Store](./contexto-sistema-2.svg)
+  Container_Boundary(cb1, "ACME Store") {
+    Container(acmeStoreWebsiteContainer, "ACME Store Website", "Aplicación web para la venta en línea")
+    Container(acmeStoreAppContainer, "ACME Store App", "Aplicación nativa de iOS para la venta en línea")
+    Container(acmeStoreAPIContainer, "ACME Store API", "API REST para la consulta y creación de pedidos")
+    ContainerQueue(emailQueue, "Email Queue", "Bus de mensajes en Kafka")
+    Container(acmeStoreETLContainer, "ETL", "Proceso de extracción de productos e inventarios")
+    ContainerDb(acmeStoreDB, "ACME Store database", "DB donde se guarda todos los pedidos")
+    ContainerDb(etlTempDatabase, "ETL Temp database", "Almacenamiento temporal para el proceso del ETL")    
+  }
 
+  Rel(customer, acmeStoreWebsiteContainer, "Crea y consulta pedidos", "JSON/HTTP")
+  Rel(customer, acmeStoreAppContainer, "Crea y consulta pedidos", "JSON/HTTP")
+
+  Rel(acmeStoreWebsiteContainer, acmeStoreAPIContainer, "Delega la creación del pedido", "JSON/HTTP")
+  Rel(acmeStoreAppContainer, acmeStoreAPIContainer, "Delega la creación del pedido", "JSON/HTTP")
+
+  Rel(emailServiceSys, emailQueue, "Consumo de mensajes", "AMQP")
+
+  Rel(acmeStoreAPIContainer, acmeStoreDB, "Guarda/Consulta pedidos", "TCP/IP")
+  Rel(acmeStoreAPIContainer, emailQueue, "Almacena mensajes para enviar emails", "AMQP")
+  Rel(acmeStoreAPIContainer, paymentServiceSys, "Programa la entrega de pedidos", "JSON/HTTP")
+  Rel(acmeStoreAPIContainer, erpSys, "Sincroniza los pedidos", "JSON/HTTP")
+
+  Rel(acmeStoreETLContainer, etlTempDatabase, "Envía datos de productos e inventarios", "TCP/IP")
+  Rel(acmeStoreETLContainer, acmeStoreDB, "Almancenamiento temporal de procesamiento", "TCP/IP")
+@enduml
+```
 
 En esta vista de la arquitectura podemos apreciar los siguientes sistemas:
 
@@ -134,8 +193,62 @@ ACME Store API es construido en capas, donde cada una de ellas cubre una respons
 *	**Repository**: capa de acceso a datos, ha esta capa se le delega la responsabilidad de consultas, guardado, actualizaciones y borrado a la base de datos. Esta capa no se preocupa por lógica de negocio, solo la comunicación con la base de datos. 
 
 
-![Diagrama de componentes](./contexto-sistema-3.svg)
+```plantuml
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
+title Diagrama de componentes del contenedor ACME Store API
+Container(website, "ACEM Store Website", "Versión web del ecommerce", "React")
+  Container(app, "ACEM Store App", "Versión nativa iOS", "Swift")
+  System_Ext(keycloak, "Keycloak", "Control de acceso")
+  System_Ext(paymentService, "PaymentService", "Servicio para el procesamiento de pagos")
+  
+  Container_Boundary(apiBundle, "ACME STore API") {
+    Component(userController, "UserController", "Provee los servicios REST de usuarios")
+    Component(productController, "ProductController", "Provee los servicios REST de productos")
+    Component(carController, "CarController", "Provee los servicios REST del carrito de compras")
+    Component(orderController, "OrderController", "Provee los servicios REST de ordenes")
+
+    Component(userService, "UserService", "Provee la lógica de negocio de usuarios")
+    Component(productService, "ProductService", "Provee la lógica de negocio productos")
+    Component(carService, "CarService", "Provee la lógica de negocio del carrito de compras")
+    Component(orderService, "OrderService", "Provee la lógica de negocio de ordenes")
+
+    Component(userRepository, "UserRepository", "Lógica de acceso a datos")
+    Component(productRepository, "ProductRepository", "Lógica de acceso a datos")
+    Component(carRepository, "CarRepository", "Lógica de acceso a datos")
+    Component(orderRepository, "OrderRepository", "Lógica de acceso a datos")
+
+    Rel(userController, userService, "Delega la ejecución")
+    Rel(productController, productService, "Delega la ejecución")
+    Rel(carController, carService, "Delega la ejecución")
+    Rel(orderController, orderService, "Delega la ejecución")
+
+    Rel(userService, userRepository, "Acceso a datos")
+    Rel(productService, productRepository, "Acceso a datos")
+    Rel(carService, carRepository, "Acceso a datos")
+    Rel(orderService, orderRepository, "Acceso a datos")
+  }
+
+  ContainerDb_Ext(storeDb, "ECME Store Database", "Base de datos del API del ecommerce", "MySQL")
+
+  Rel(website, userController, "")
+  Rel(website, productController, "")
+  Rel(website, carController, "")
+  Rel(website, orderController, "")
+
+  Rel(app, userController, "")
+  Rel(app, productController, "")
+  Rel(app, carController, "")
+  Rel(app, orderController, "")
+
+    
+  Rel(userRepository, storeDb, "")
+  Rel(productRepository, storeDb, "")
+  Rel(carRepository, storeDb, "")
+  Rel(orderRepository, storeDb, "")
+@enduml
+```
 
 Para comprender mejor el funcionamiento de la aplicación, hemos dividido el contenedor en “dominios”, donde cada domino agrupa una serie de clases relacionadas entre sí y que responde en función de una entidad. 
 
@@ -161,13 +274,134 @@ En esta sección describiremos aquellos procesos que, por su complejidad o criti
 ### Dominio de la aplicación
 El siguiente diagrama muestra las Entidades administradas por este componente, las cuales tiene una relación directa con la base de datos.
 
+```plantuml
+@startuml
 
-![Diagrama de entidades](./contexto-sistema-4.svg "Diagrama de entidades")
+  class Orden {
+    - id: Long
+    - usuario: Usuario
+    - orderNo: String
+    - regDate: DateTime
+    + getId() : Long
+    + getOrderNo(): String
+    + getRegDate(): DateTime
+    + getUsuario(): Usuario
+    + setId(Long): Void
+    + setOrderNo(String): Void
+    + setRegDate(DateTime): Void
+    + setUsuario(Usuario): Void
+  }
+
+  class Carrito {
+    - id: Long
+    - usuario: Usuario
+    - productos: List
+    + getId() : Long
+    + setId(Long): Void
+    + getUsuario(): Usuario
+    + setUsuario(Usuario): Void
+    + getProductos(): List
+    + setProductos(List)
+  }
+
+  class OrdenLine {
+    - id: Long
+    - producto: Producto
+    - cantidad: Double
+    - precio: Double
+    + getId(): Long
+    + getProducto(): Producto
+    + getCantidad(): Double
+    + getPrecio(): Double
+    + setId(Long): Void
+    + setProducto(Producto): Void
+    + setCantidad(Double): Void
+    + setPrecio(Double): Void
+  }
+
+  class CarritoLine {
+    - id: Long
+    - producto: Producto
+    - cantidad: Double
+    - precio: Double
+    + getId(): Long
+    + getProducto(): Producto
+    + getCantidad(): Double
+    + getPrecio(): Double
+    + setId(Long): Void
+    + setProducto(Producto): Void
+    + setCantidad(Double): Void
+    + setPrecio(Double): Void
+  }
+  
+  class Producto {
+    - id: Long
+    - nombre: String
+    - precio: Double
+    + getId(): Long
+    + getNombre(): String
+    + getPrecio(): Double
+    + setId(Long): Void
+    + setNombre(String): Void
+    + setPrecio(Double): Void
+  }
+
+  class Usuario {
+    - id:Long
+    - username:String
+    - email:String
+    + getId() : Long
+    + getUsername(): String
+    + getEmail(): String
+    + setId(Long)
+    + setUsername(String)
+    + setEmail(String)
+  }
+
+  Orden *-- OrdenLine
+  Carrito *-- CarritoLine
+  Orden --> Usuario
+  Carrito --> Usuario
+  OrdenLine o-- Producto
+  CarritoLine o-- Producto
+
+@enduml
+```
+
+
 
 ## Proceso de autenticación
 El proceso de autenticación puede resultar complejo en primera instancia, sobre todo si se desconocen los estándares de OAuth y OpenID Connect, por lo que el siguiente diagrama intenta dar una idea más clara del proceso por medio del cuál se lleva a acabo la autenticación de los usuarios.
 
-![Diagrama de componentes](./contexto-sistema-5.svg)
+```plantuml
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Dynamic.puml
+
+Person(usuario, "Usuario", "Usuario del ecommerce")
+
+Container_Boundary(acmeStore, "ACME Store") {
+  System_Ext(keycloak, "Keycloak", "Proveedor de autenticación")
+  Container(website, "ACME Store Website", "Aplicación web", "React") 
+}
+
+Container_Boundary(apiBoundary, "ACME Store API") {
+  Component(securityContext, "SecurirtyContext", "Spring Security")
+  Component(userController, "UserController", "SpringBoot Controller")
+
+  Rel(securityContext, userController, "8. Consulta datos de la cuenta", "JSON/HTTP")
+}
+
+Rel(usuario, website, "1. Accede a la página", "HTTP/HTML")
+Rel(website, keycloak, "2. Redirecciona al usuario<br>para autenticarlo", "HTTP/HTML")
+Rel(usuario, keycloak, "3. Se firma con<br>usuario y password", "HTTP/HTML")
+Rel(keycloak, usuario, "4. Autnetica, envía token<br>redirecciona al ecommerce", "HTTP/HTML")
+Rel(usuario, website, "5. Accede a la página de inicio", "HTTP/HTML")
+Rel(website, securityContext, "6. Consilta datos de la cuenta", "JSON/HTTP")
+Rel(securityContext, keycloak, "7. Valida el token del usuario", "JSON/HTTP/OpenID Connect")
+Rel(securityContext, userController, "8. Consulta datos de la cuenta", "JSON/HTTP")
+Rel(securityContext, website, "9. Retorna datos de la cuenta", "JSON/HTTP")
+@enduml
+```
 
 
 Keycloak es un proyecto de código abierto que implementa la autenticación por medio del estándar de OAuth y OpenID Connect y es la base sobre la que funciona el sistema de autenticación de ACME Store.
@@ -179,7 +413,33 @@ De allí en adelante, cada petición que realice el usuario sobre el sistema, te
 ### Proceso de creación de pedidos
 La generación de pedidos es el proceso más importante de la aplicación, pues de este depende que la tienda tenga ventas y pueda ser rentable, además, es un proceso complejo, ya que interviene varios servicios o sistemas externos para su correcto funcionamiento.
 
-![Diagrama dinámico del proceso de generación de pedidos](./contexto-sistema-6.svg)
+```plantuml
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Dynamic.puml
+
+  title Proceso de creación de pedidos
+  Person(user, "Usuario", "Usuario del ecommerce")
+  Container(website, "ACME Store Website", "Aplicación web de comercio electrónico")
+  System_Ext(paymentService, "PaymentService", "Servicio para el procesamiento de pagos")
+  System_Ext(erp, "ERP", "Sistema de administración de productos e inventarios")
+  System_Ext(emailService, "EmailService", "Servicio para el envío de emails")
+
+  Container_Boundary(api, "ACME Store API") {
+    Component(orderController, "OrderController", "Controlador que expone servicios de pedidos", "SpringBoot Controller")
+    Component(orderService, "OrderService", "Componente que gestiona la lógica de negocio de pedidos", "SpringBoot Service")
+    Component(carService, "CarService", "Componente que gestiona la lógica de negocio del carrito de compras", "SpringBoot Repository")
+
+    Rel(orderController, orderService, "3. Delega creación del pedido")
+    Rel(orderService, paymentService, "4. Procesar pago", "JSON/HTTP")
+    Rel(orderService, erp, "5. Sincroniza los pedidos", "JSON/HTTP")
+    Rel(orderService, carService, "6. Limpiar carrito")
+    Rel(orderService, emailService, "7. Se envía email de confirmación de pedido", "JSON/HTTP")
+  }
+  Rel(user, website, "1.Captura datos del pago<br>finaliza pedido", "HTML/HTTP")
+  Rel(website, orderController, "2.Crear pedido", "JSON/HTTP")
+@enduml
+```
+
 
 El proceso de creación de ordenes se puede disparar desde diferentes medios, ya que al ser un servicio REST, solo basta que un consumidor ejecute el servicio para que se detone la creación, sin embargo, por el momento, los dos únicos actores conocidos que pueden hacer esto son los contenedores ACME Store App y ACME Store Website.
 
@@ -188,19 +448,138 @@ Dicho lo anterior, el proceso de creación se dispara desde el servicio REST de 
 El orden en que se realizan estos pasos se puede apreciar en el siguiente diagrama de secuencia.
 
 
-![Diagrama de secuencia del proceso de creación del pedido](./contexto-sistema-7.svg "Diagrama de secuencia del proceso de creación del pedido")
+```plantuml
+@startuml
+title Diagrama de secuencia del proceso de creación del pedido
+
+actor User
+User ->> OrderController: POST: /orders
+activate OrderController
+OrderController ->> OrderService: createOrder()
+activate OrderService
+OrderService ->> Order: new
+activate Order
+Order ->> OrderService: return new instance
+deactivate Order
+OrderService ->> OrderRepository: save()
+activate OrderRepository
+OrderRepository ->> OrderService: return id
+deactivate OrderRepository
+OrderService ->> PaymentClient: processPayment()
+activate PaymentClient
+PaymentClient ->> OrderService: return paymentConfirmation()
+deactivate PaymentClient
+OrderService ->> CarService: cleanCar()
+activate CarService
+CarService ->> OrderService: void
+deactivate CarService
+OrderService ->> OrderController: return
+deactivate OrderService
+OrderController ->> User: return
+deactivate OrderController
+@enduml
+```
 
 
 El siguiente diagrama ilustra perfectamente como esta conformado el contenedor ACME Store API respecto al dominio de pedidos:
 
 
-![diagram](./contexto-sistema-8.svg "Diagrama de clases del dominio de Ordenes")
+```plantuml
+@startuml
+
+title Diagrama de clases del dominio de Ordenes
+
+class OrderController <<RestController>> {
+  + create(OrderRequestDTO): OrderResponseDTO
+  + cancel(Long): Void
+  + findById(Long): OrderResponseDTO
+}
+
+class OrderService <<Service>> {
+  + create(Order): Order
+  + cancel(Long): Void
+  + findById(Long): Order
+}
+
+interface OrderRepository <<JpaRepository>> {
+}
+
+class OrderResponseDTO <<DTO>> {
+}
+
+class OrderRequestDTO <<DTO>> {
+}
+
+class EmailSender <<Service>> {
+  + create(SenderRequest): Void
+}
+
+class ValidateServiceException <<Exception>> {
+}
+
+class GeneralServiceException <<Exception>> {
+}
+
+class Orden <<Entity>> {
+}
+
+interface JpaRepository {
+}
+
+OrderController --> OrderResponseDTO: Create
+OrderController --> OrderRequestDTO: Utiliza
+OrderController --> OrderService: Utiliza
+OrderService --> EmailSender: Envía emails
+OrderService --> OrderRepository: Utiliza
+OrderService --> ValidateServiceException: throw
+OrderService --> GeneralServiceException: throw
+OrderService --> Orden: Crea
+OrderRepository --|> JpaRepository: Extends 
+@enduml
+```
 
 
 # ARQUITECTURA FÍSICA
 La arquitectura física tiene como objetivo ilustrar cómo los contenedores se desplegarán físicamente dentro de los servidores de nuestra infraestructura o de la nube.
 
-![diagram](./contexto-sistema-9.svg)
+```plantuml
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Deployment.puml
+
+title Diagrama de despliegue
+
+Deployment_Node(websiteNode, "ACME Store Website", "Firebase") {
+  Container(webapp, "ACME Store Website", "Aplicación web de comercio electrónico")
+}
+
+Deployment_Node(appNode, "ACME Store App", "App Store") {
+  Container(app, "ACME Store Website", "Aplicación App de comercio electrónico")
+}
+
+Deployment_Node(acmeStore, "ACME Store Corp", "Infraestructura OnPremise") {
+  Deployment_Node(dbNode, "acmestore-db-01") {
+    Deployment_Node(mysqlNode, "MySQL - Master") {
+      Container(acmeStoreDb, "ACME Store DB", "Base de datos de ACME Store API")
+    }
+  }
+
+  Deployment_Node(kubernetesNode, "Kurbenetes") {
+    Deployment_Node(podNode, "ACME Store Corp", "Pod") {
+      Container(api, "ACME Store API", "API de backend para el ecommerce")
+    }
+  }
+}
+
+Deployment_Node(erpNode, "ERP Cloud", "Cloud del proveedor del ERP") {
+  System_Ext(erp, "ERP", "Sistema de gestión de productos<br>inventarios,pedidos")
+}
+
+Rel(webapp, api, "Llamadas REST", "JSON/HTTP")
+Rel(app, api, "Llamadas REST", "JSON/HTTP")
+Rel(api, acmeStoreDb, "Actualiza pedidos", "TCP/IP")
+Rel(api, erp, "Llamadas REST", "JSON/HTTP")
+@enduml
+```
 
 
 ACME Corp cuenta con una robusta infraestructura on-premise que le permite desplegar sus aplicaciones de forma loca con infraestructura propia. Para esto, ACME Corp cuenta un cluster de Kubernetes para desplegar aplicaciones y también cuenta con la posibilidad de desplegar aplicaciones en maquinas virtuales o físicas. 

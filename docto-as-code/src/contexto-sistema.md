@@ -104,8 +104,7 @@ C4Context
   Rel(ACMEStoreSys, emailSenderSys, "Envío de emails y listas de correo")
   Rel(ACMEStoreSys, fedexSys, "Cotizar, programar<br>y consultar status de envios")
 
-  UpdateLayoutConfig($c4ShapeInRow="6", $c4BoundaryInRow="1")
-
+  UpdateLayoutConfig($c4ShapeInRow="4", $c4BoundaryInRow="3")
 ```
 
 ACME Store es la aplicación web de comercio electrónico de ACME Corp, la cual puedes visitar en acmestore.com, o descargando la aplicación desde la App Store. 
@@ -131,7 +130,7 @@ C4Context
   accTitle: Diagrama de contenedores de ACME Store
   accDescr: Diagrama de contenedores de ACME Store
 
-  UpdateLayoutConfig($c4ShapeInRow="6", $c4BoundaryInRow="1")
+  
 
   Person(customer, "Customer", "Cliente del ecommerce")
   System_Ext(paymentServiceSys, "PaymentService", "Servicio para el procesamiento de pagos")
@@ -163,6 +162,8 @@ C4Context
 
   Rel(acmeStoreETLContainer, etlTempDatabase, "Envía datos de productos e inventarios", "TCP/IP")
   Rel(acmeStoreETLContainer, acmeStoreDB, "Almancenamiento temporal de procesamiento", "TCP/IP")
+
+  UpdateLayoutConfig($c4ShapeInRow="6", $c4BoundaryInRow="1")
 ```
 
 
@@ -251,7 +252,6 @@ C4Component
   Rel(productRepository, storeDb, "")
   Rel(carRepository, storeDb, "")
   Rel(orderRepository, storeDb, "")
-  
   
   UpdateLayoutConfig("4", "2")
 
@@ -413,6 +413,7 @@ C4Dynamic
   Rel(securityContext, keycloak, "7. Valida el token del usuario", "JSON/HTTP/OpenID Connect")
   Rel(securityContext, userController, "8. Consulta datos de la cuenta", "JSON/HTTP")
   Rel(securityContext, website, "9. Retorna datos de la cuenta", "JSON/HTTP")
+
 ```
 
 
@@ -553,6 +554,7 @@ La arquitectura física tiene como objetivo ilustrar cómo los contenedores se d
 
 ```mermaid
 C4Deployment
+
   title Diagrama de despliegue
 
   Deployment_Node(websiteNode, "ACME Store Website", "Firebase") {
