@@ -88,7 +88,7 @@ Los siguientes requerimientos no funcionales fueron identificados y tomados en c
 title ACME Store
 
 Person(customer, "Customer", "Cliente del ecommerce")
-System_Ext(fedexSys, "Software System", "Proveedor de paquetería")
+System_Ext(fedexSys, "FEDEX", "Proveedor de paquetería")
 
 Enterprise_Boundary(b1, "ACME Store") { 
     System(ACMEStoreSys, "ACME Store", "Aplicación web de ventas de productos online")
@@ -158,7 +158,7 @@ ACME Store es una aplicación de comercio electrónico, compuesto por diferentes
   Rel(acmeStoreAPIContainer, erpSys, "Sincroniza los pedidos", "JSON/HTTP")
 
   Rel(acmeStoreETLContainer, etlTempDatabase, "Envía datos de productos e inventarios", "TCP/IP")
-  Rel(acmeStoreETLContainer, acmeStoreDB, "Almancenamiento temporal de procesamiento", "TCP/IP")
+  Rel(acmeStoreETLContainer, acmeStoreDB, "Almacenamiento temporal de procesamiento", "TCP/IP")
 @enduml
 ```
 
@@ -202,7 +202,6 @@ Container(website, "ACEM Store Website", "Versión web del ecommerce", "React")
   Container(app, "ACEM Store App", "Versión nativa iOS", "Swift")
   System_Ext(keycloak, "Keycloak", "Control de acceso")
   System_Ext(paymentService, "PaymentService", "Servicio para el procesamiento de pagos")
-  
   Container_Boundary(apiBundle, "ACME STore API") {
     Component(userController, "UserController", "Provee los servicios REST de usuarios")
     Component(productController, "ProductController", "Provee los servicios REST de productos")
@@ -378,7 +377,6 @@ El proceso de autenticación puede resultar complejo en primera instancia, sobre
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Dynamic.puml
 
 Person(usuario, "Usuario", "Usuario del ecommerce")
-
 Container_Boundary(acmeStore, "ACME Store") {
   System_Ext(keycloak, "Keycloak", "Proveedor de autenticación")
   Container(website, "ACME Store Website", "Aplicación web", "React") 

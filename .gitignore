@@ -9,3 +9,4 @@ driagramas/ecommerce/arquitectando/dynamics/.$nueva-orden.drawio.bkp
 *.bkp
 *.dtmp
 docto-as-code/build/
+docto-as-code/lib/plantuml.jar
