@@ -2,5 +2,5 @@
 
 for file in ./src/*.md; do 
     filename=$(basename -- "$file" .md)
-    pandoc --verbose --toc -M document-css=false -t $TYPE -i "$file" -o "${filename}.html" --filter pandoc-kroki --extract-media=./build; 
+    pandoc --verbose -s --table-of-contents --toc-depth 4 -M document-css=false  -i "$file" -o "${filename}.html" --filter pandoc-kroki --extract-media=./build; 
 done

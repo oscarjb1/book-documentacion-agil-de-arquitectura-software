@@ -1,3 +1,106 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es-MX" xml:lang="es-MX">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Oscar Blancarte" />
+  <title>Documento de arquitectura de software del sistema ACME Store API</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Documento de arquitectura de software del sistema ACME
+Store API</h1>
+<p class="subtitle">En este documento se describe la arquitectura del
+componente ACME Store API, que sirve como backend para la tienda
+online.</p>
+<p class="author">Oscar Blancarte</p>
+<p class="date">30 de abril de 2023</p>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul class="incremental">
+<li><a href="#aprobadores-del-documento"
+id="toc-aprobadores-del-documento">APROBADORES DEL DOCUMENTO</a></li>
+<li><a href="#revisores-del-documento"
+id="toc-revisores-del-documento">REVISORES DEL DOCUMENTO</a></li>
+<li><a href="#revisores-del-documento-1"
+id="toc-revisores-del-documento-1">REVISORES DEL DOCUMENTO</a></li>
+<li><a href="#introducción" id="toc-introducción">INTRODUCCIÓN</a>
+<ul class="incremental">
+<li><a href="#propósito" id="toc-propósito">Propósito</a></li>
+<li><a href="#alcance" id="toc-alcance">Alcance</a></li>
+<li><a href="#glosario" id="toc-glosario">Glosario</a></li>
+</ul></li>
+<li><a href="#arquitectura-general"
+id="toc-arquitectura-general">ARQUITECTURA GENERAL</a>
+<ul class="incremental">
+<li><a href="#descripción-general-de-la-aplicación"
+id="toc-descripción-general-de-la-aplicación">Descripción general de la
+aplicación</a></li>
+<li><a href="#objetivos-generales-y-restricciones-de-la-arquitectura"
+id="toc-objetivos-generales-y-restricciones-de-la-arquitectura">Objetivos
+generales y restricciones de la arquitectura</a></li>
+<li><a href="#arquitectura-de-contexto-del-sistema"
+id="toc-arquitectura-de-contexto-del-sistema">Arquitectura de contexto
+del sistema</a></li>
+</ul></li>
+<li><a href="#arquitectura-lógica"
+id="toc-arquitectura-lógica">ARQUITECTURA LÓGICA</a>
+<ul class="incremental">
+<li><a href="#arquitectura-de-contenedores"
+id="toc-arquitectura-de-contenedores">Arquitectura de contenedores</a>
+<ul class="incremental">
+<li><a href="#proceso-de-extracción-etl"
+id="toc-proceso-de-extracción-etl">Proceso de extracción ETL</a></li>
+</ul></li>
+<li><a href="#arquitectura-de-componentes"
+id="toc-arquitectura-de-componentes">Arquitectura de componentes</a>
+<ul class="incremental">
+<li><a href="#dominio-de-usuarios" id="toc-dominio-de-usuarios">Dominio
+de usuarios</a></li>
+<li><a href="#dominio-de-productos"
+id="toc-dominio-de-productos">Dominio de Productos</a></li>
+<li><a href="#dominio-de-carrito-de-compras"
+id="toc-dominio-de-carrito-de-compras">Dominio de Carrito de
+compras</a></li>
+<li><a href="#dominio-de-ordenes" id="toc-dominio-de-ordenes">Dominio de
+Ordenes</a></li>
+</ul></li>
+<li><a href="#arquitectura-de-bajo-nivel"
+id="toc-arquitectura-de-bajo-nivel">Arquitectura de bajo nivel</a>
+<ul class="incremental">
+<li><a href="#dominio-de-la-aplicación"
+id="toc-dominio-de-la-aplicación">Dominio de la aplicación</a></li>
+</ul></li>
+<li><a href="#proceso-de-autenticación"
+id="toc-proceso-de-autenticación">Proceso de autenticación</a>
+<ul class="incremental">
+<li><a href="#proceso-de-creación-de-pedidos"
+id="toc-proceso-de-creación-de-pedidos">Proceso de creación de
+pedidos</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#arquitectura-física"
+id="toc-arquitectura-física">ARQUITECTURA FÍSICA</a></li>
+</ul>
+</nav>
 <p><img src="../images/oscarblancarteblog.png"></p>
 <style type="text/css">
     @import url(../styles/styles.css);
@@ -158,7 +261,8 @@ ser diseñado para ser fácilmente utilizable por cualquier persona.</td>
 </table>
 <h2 id="arquitectura-de-contexto-del-sistema">Arquitectura de contexto
 del sistema</h2>
-<p><img src="build/d74e0590febef474ca46579db8f12cd0401834a0.svgz" /></p>
+<p><img
+src="./build/8b0a915ef4c1683cc14acf6baf0fe379c896e105.svgz" /></p>
 <p>ACME Store es la aplicación web de comercio electrónico de ACME Corp,
 la cual puedes visitar en acmestore.com, o descargando la aplicación
 desde la App Store. ACME Store puede parecer una simple aplicación, sin
@@ -197,7 +301,8 @@ de productos e inventarios, etc. En este sentido ACME Store API es el
 componente de backend que expone los servicios y la lógica de negocio
 que le da vida a la aplicación y en el que nos centraremos en este
 documento.</p>
-<p><img src="build/8fb84892ca080d56f5c3fcbc457dad05bdb62a26.svgz" /></p>
+<p><img
+src="./build/ece92939c320c45ea66f415a951354f4cb43a2c7.svgz" /></p>
 <p>En esta vista de la arquitectura podemos apreciar los siguientes
 sistemas:</p>
 <ul class="incremental">
@@ -274,7 +379,8 @@ le delega la responsabilidad de consultas, guardado, actualizaciones y
 borrado a la base de datos. Esta capa no se preocupa por lógica de
 negocio, solo la comunicación con la base de datos.</li>
 </ul>
-<p><img src="build/b8b78c28a78a915ce347c559adb38129f7bb9b48.svgz" /></p>
+<p><img
+src="./build/021368e10809a8066d477d754c372f61083d650f.svgz" /></p>
 <p>Para comprender mejor el funcionamiento de la aplicación, hemos
 dividido el contenedor en “dominios”, donde cada domino agrupa una serie
 de clases relacionadas entre sí y que responde en función de una
@@ -322,14 +428,16 @@ fino.</p>
 <p>El siguiente diagrama muestra las Entidades administradas por este
 componente, las cuales tiene una relación directa con la base de
 datos.</p>
-<p><img src="build/90e947b21b4365f1c7b35da47959769d3e11c7ad.svgz" /></p>
+<p><img
+src="./build/90e947b21b4365f1c7b35da47959769d3e11c7ad.svgz" /></p>
 <h2 id="proceso-de-autenticación">Proceso de autenticación</h2>
 <p>El proceso de autenticación puede resultar complejo en primera
 instancia, sobre todo si se desconocen los estándares de OAuth y OpenID
 Connect, por lo que el siguiente diagrama intenta dar una idea más clara
 del proceso por medio del cuál se lleva a acabo la autenticación de los
 usuarios.</p>
-<p><img src="build/649233de8fb7045a9c22ef817cf8747ad44a9ec7.svgz" /></p>
+<p><img
+src="./build/d51481d7472e10b3c3d7bf4e399f7b9c01b90739.svgz" /></p>
 <p>Keycloak es un proyecto de código abierto que implementa la
 autenticación por medio del estándar de OAuth y OpenID Connect y es la
 base sobre la que funciona el sistema de autenticación de ACME Store.
@@ -352,7 +460,8 @@ pedidos</h3>
 aplicación, pues de este depende que la tienda tenga ventas y pueda ser
 rentable, además, es un proceso complejo, ya que interviene varios
 servicios o sistemas externos para su correcto funcionamiento.</p>
-<p><img src="build/e596e4c1363561b0bb8145ca0c68cb38b210923a.svgz" /></p>
+<p><img
+src="./build/e596e4c1363561b0bb8145ca0c68cb38b210923a.svgz" /></p>
 <p>El proceso de creación de ordenes se puede disparar desde diferentes
 medios, ya que al ser un servicio REST, solo basta que un consumidor
 ejecute el servicio para que se detone la creación, sin embargo, por el
@@ -368,15 +477,18 @@ mediante el sistema PaymentService, sincroniza el pedido con el ERP y
 envía un correo electrónico con la confirmación del pedido.</p>
 <p>El orden en que se realizan estos pasos se puede apreciar en el
 siguiente diagrama de secuencia.</p>
-<p><img src="build/761956622bce94a741238a5f2d2f26abbf3bebaf.svgz" /></p>
+<p><img
+src="./build/761956622bce94a741238a5f2d2f26abbf3bebaf.svgz" /></p>
 <p>El siguiente diagrama ilustra perfectamente como esta conformado el
 contenedor ACME Store API respecto al dominio de pedidos:</p>
-<p><img src="build/2ec7226419be83900909bba63ce52eaa06d9f694.svgz" /></p>
+<p><img
+src="./build/2ec7226419be83900909bba63ce52eaa06d9f694.svgz" /></p>
 <h1 id="arquitectura-física">ARQUITECTURA FÍSICA</h1>
 <p>La arquitectura física tiene como objetivo ilustrar cómo los
 contenedores se desplegarán físicamente dentro de los servidores de
 nuestra infraestructura o de la nube.</p>
-<p><img src="build/311606d66fe84cf8040aa9db716550e6bbbcb573.svgz" /></p>
+<p><img
+src="./build/311606d66fe84cf8040aa9db716550e6bbbcb573.svgz" /></p>
 <p>ACME Corp cuenta con una robusta infraestructura on-premise que le
 permite desplegar sus aplicaciones de forma loca con infraestructura
 propia. Para esto, ACME Corp cuenta un cluster de Kubernetes para
@@ -402,3 +514,5 @@ desde una máquina virtual llamada “acmestore-db-01”.</li>
 y administrado en su totalidad por el proveedor, por lo que vive en la
 nube del vendor.</li>
 </ul>
+</body>
+</html>

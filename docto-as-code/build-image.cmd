@@ -1,1 +1,1 @@
-podman build -t pandoc-builder -f ./dockerfile
+docker build -t pandoc-builder .
